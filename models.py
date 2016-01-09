@@ -24,12 +24,13 @@ class Chapter(db.Model):
     name = db.Column(db.String(200), unique=False)
     url = db.Column(db.String(200), unique=True)
     cdn_id = db.Column(db.Integer)
+    downloaded = db.Column(db.Boolean, default=False)
 
     def __init__(self, name, url="http://"):
         self.name = name
         self.url = url
-        #http://readms.com/r/akame_ga_kill/065/3075/1
-        self.cdn_id=url.split('/')[-2] #get cdc id from url
+        # http://readms.com/r/akame_ga_kill/065/3075/1
+        self.cdn_id = url.split('/')[-2]  # get cdc id from url
 
     def __unicode__(self):
         return self.name

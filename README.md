@@ -1,9 +1,10 @@
 # MangaStream Archiver
-Python bot for downloading new releases from MangaStream
+Python bot for downloading new releases from MangaStream. Its working but doesn't tested fully
 
 - data is in sqllite database
 - get manga list from site
 - get chapters from manga list
+- download not downnloaded chapters
 
 ## Database model
 
@@ -20,6 +21,7 @@ Python bot for downloading new releases from MangaStream
 - url
 - cdn_id 
 - manga -> Manga
+- downloaded
 
  
 

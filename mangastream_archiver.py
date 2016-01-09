@@ -1,11 +1,13 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 import traceback
-
+import shutil
+import os
 import requests
 import bs4
 from models import Manga, Chapter
 from config import *
+import urllib
 
 
 # create tables sqlalchemy init
@@ -13,10 +15,20 @@ def create_tables():
     db.create_all()
 
 
+# create dir if not exist
+def ensure_dir(f):
+    try:
+        os.makedirs(f)
+    except OSError:
+        if not os.path.isdir(f):
+            raise
+
+
 # get manga list from mangastream if not in database add
 def updateMangaList():
     page = requests.get(base_url)
     soup = bs4.BeautifulSoup(page.text, 'lxml')
+    # a tags in table that have table and table-striped classes
     for a in soup.select('table.table.table-striped a[href^=' + base_url + ']'):
         try:
             # if not in database add
@@ -33,12 +45,12 @@ def updateMangaList():
 def get_chapter(manga):
     page = requests.get(manga.url)
     soup = bs4.BeautifulSoup(page.text, 'lxml')
+    # a tags in table that have table and table-striped classes
     for a in soup.select('table.table.table-striped a'):
         try:
             # if not in database add
-            print a.string
-            if db.query(Chapter).filter_by(url=a.attrs.get('href')).first() is None:
-                chapter = Chapter(a.string, a.attrs.get('href'))
+            if db.query(Chapter).filter_by(url=a.attrs.get('href')[:-1]).first() is None:
+                chapter = Chapter(a.string, a.attrs.get('href')[:-1])
                 manga.chapters.append(chapter)
                 db.session.commit()
 
@@ -48,9 +60,43 @@ def get_chapter(manga):
 
 # download given chapter
 def download_chapter(chapter):
-    pass
+    print "start " + chapter.name
+    dir = os.path.join(outdir, chapter.manga.name, chapter.name)
+    if os.path.isdir(dir):
+        print "path not empty. already downloaded?"
+        return
+    page = requests.get(chapter.url, allow_redirects=False)
+    if not page.ok:
+        print "chapter deleted from site"
+        return
+    ensure_dir(dir)
+    i = 1
+    while True:
+        page = requests.get(chapter.url + str(i), allow_redirects=False)
+        i += 1
+        if page.status_code == 302:
+            # zip chapter
+            shutil.make_archive(dir, 'zip', dir)
+            chapter.downloaded = True
+            shutil.rmtree(dir, ignore_errors=True)
+            print "chapter finish"
+            break
+        soup = bs4.BeautifulSoup(page.text, 'lxml')
+        img = soup.select('#manga-page')[0].attrs.get('src')
+        urllib.urlretrieve(img, os.path.join(dir, img.split("/")[-1]))
 
 
+def main():
+    for manga in db.query(Manga).all():
+        get_chapter(manga)
+        for chapter in manga.chapters:
+            if not chapter.downloaded:
+                download_chapter(chapter)
+
+
+ensure_dir(outdir)
+print basedir
 create_tables()
 updateMangaList()
-get_chapter(db.query(Manga).filter_by(name="Akame Ga Kill").first())
+
+main()
