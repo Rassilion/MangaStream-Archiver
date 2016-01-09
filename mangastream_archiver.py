@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+from __future__ import unicode_literals
 import traceback
 import shutil
 import os
@@ -8,6 +9,7 @@ import bs4
 from models import Manga, Chapter
 from config import *
 import urllib
+import sys
 
 
 # create tables sqlalchemy init
@@ -27,13 +29,13 @@ def ensure_dir(f):
 # get manga list from mangastream if not in database add
 def updateMangaList():
     page = requests.get(base_url)
-    soup = bs4.BeautifulSoup(page.text, 'lxml')
+    soup = bs4.BeautifulSoup(page.text, 'lxml', from_encoding="utf-8")
     # a tags in table that have table and table-striped classes
     for a in soup.select('table.table.table-striped a[href^=' + base_url + ']'):
         try:
             # if not in database add
-            if db.query(Manga).filter_by(name=a.string).first() is None:
-                manga = Manga(a.string, a.attrs.get('href'))
+            if db.query(Manga).filter_by(name=unicode(a.string)).first() is None:
+                manga = Manga(unicode(a.string), unicode(a.attrs.get('href')))
                 db.add(manga)
                 db.session.commit()
 
@@ -44,13 +46,13 @@ def updateMangaList():
 # get chapter of given manga
 def get_chapter(manga):
     page = requests.get(manga.url)
-    soup = bs4.BeautifulSoup(page.text, 'lxml')
+    soup = bs4.BeautifulSoup(page.text, 'lxml', from_encoding="utf-8")
     # a tags in table that have table and table-striped classes
     for a in soup.select('table.table.table-striped a'):
         try:
             # if not in database add
-            if db.query(Chapter).filter_by(url=a.attrs.get('href')[:-1]).first() is None:
-                chapter = Chapter(a.string, a.attrs.get('href')[:-1])
+            if db.query(Chapter).filter_by(url=unicode(a.attrs.get('href')[:-1])).first() is None:
+                chapter = Chapter(unicode(a.string), unicode(a.attrs.get('href')[:-1]))
                 manga.chapters.append(chapter)
                 db.session.commit()
 
@@ -60,7 +62,7 @@ def get_chapter(manga):
 
 # download given chapter
 def download_chapter(chapter):
-    print "start " + chapter.name
+    print "start " + chapter.name.encode('utf-8')
     dir = os.path.join(outdir, chapter.manga.name, chapter.name)
     if os.path.isdir(dir):
         print "path not empty. already downloaded?"
@@ -72,7 +74,7 @@ def download_chapter(chapter):
     ensure_dir(dir)
     i = 1
     while True:
-        page = requests.get(chapter.url + str(i), allow_redirects=False)
+        page = requests.get(chapter.url + unicode(i), allow_redirects=False)
         i += 1
         if page.status_code == 302:
             # zip chapter
@@ -88,11 +90,13 @@ def download_chapter(chapter):
 
 def main():
     for manga in db.query(Manga).all():
-        print manga.name
+        print manga.name.encode('utf-8')
         get_chapter(manga)
         for chapter in manga.chapters:
             if not chapter.downloaded:
-                download_chapter(chapter)
+                # download_chapter(chapter)
+                print chapter.name.encode('utf-8')
+                pass
 
 
 ensure_dir(outdir)

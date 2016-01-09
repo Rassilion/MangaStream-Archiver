@@ -5,8 +5,8 @@ from config import db
 class Manga(db.Model):
     __tablename__ = 'manga'
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(200), unique=True)
-    url = db.Column(db.String(200), unique=True)
+    name = db.Column(db.Unicode(200), unique=True)
+    url = db.Column(db.Unicode(200), unique=True)
     chapters = db.relationship('Chapter', backref='manga', lazy='dynamic')
 
     def __init__(self, name=None, url=None):
@@ -21,8 +21,8 @@ class Chapter(db.Model):
     __tablename__ = 'chapter'
     id = db.Column(db.Integer, primary_key=True)
     manga_id = db.Column(db.Integer, db.ForeignKey('manga.id'))
-    name = db.Column(db.String(200), unique=False)
-    url = db.Column(db.String(200), unique=True)
+    name = db.Column(db.Unicode(200), unique=False)
+    url = db.Column(db.Unicode(200), unique=True)
     cdn_id = db.Column(db.Integer)
     downloaded = db.Column(db.Boolean, default=False)
 
