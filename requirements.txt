@@ -1,2 +1,5 @@
-requests
 lxml
+requests
+cssselect
+beautifulsoup4
+sqlalchemy_wrapper
