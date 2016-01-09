@@ -94,9 +94,7 @@ def main():
         get_chapter(manga)
         for chapter in manga.chapters:
             if not chapter.downloaded:
-                # download_chapter(chapter)
-                print chapter.name.encode('utf-8')
-                pass
+                download_chapter(chapter)
 
 
 ensure_dir(outdir)

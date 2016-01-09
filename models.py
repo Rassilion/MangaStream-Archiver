@@ -27,8 +27,8 @@ class Chapter(db.Model):
     downloaded = db.Column(db.Boolean, default=False)
 
     def __init__(self, name, url="http://"):
-        a=name.replace("/",",")
-        a=a.replace("\\",",")
+        a = name.replace("/", ",")
+        a = a.replace("\\", ",")
         self.name = a
         self.url = url
         # http://readms.com/r/akame_ga_kill/065/3075/1
