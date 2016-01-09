@@ -62,7 +62,7 @@ def get_chapter(manga):
 
 # download given chapter
 def download_chapter(chapter):
-    print "start " + chapter.name.encode('utf-8')
+    print chapter.name.encode('utf-8')
     dir = os.path.join(outdir, chapter.manga.name, chapter.name)
     if os.path.isdir(dir):
         print "path not empty. already downloaded?"
@@ -80,6 +80,7 @@ def download_chapter(chapter):
             # zip chapter
             shutil.make_archive(dir, 'zip', dir)
             chapter.downloaded = True
+            db.commit()
             shutil.rmtree(dir, ignore_errors=True)
             print "chapter finish"
             break

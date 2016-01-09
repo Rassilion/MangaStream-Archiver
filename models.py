@@ -28,7 +28,7 @@ class Chapter(db.Model):
 
     def __init__(self, name, url="http://"):
         a = name.replace("/", ",")
-        a = a.replace("\\", ",")
+        a = a.replace("\\", ",").replace(u"\u2018", "'").replace(u"\u2019", "'")
         self.name = a
         self.url = url
         # http://readms.com/r/akame_ga_kill/065/3075/1
