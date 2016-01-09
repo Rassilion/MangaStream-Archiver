@@ -1,6 +1,8 @@
 # MangaStream Archiver
 Python program for downloading new releases from MangaStream. Its working but doesn't tested fully
 
+TODO: removing bad chacters from names (OS reserved characters)
+
 - data is in sqllite database
 - get manga list from site
 - get chapters from manga list
