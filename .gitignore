@@ -116,3 +116,4 @@ crashlytics-build.properties
 
 # database file
 manga.db
+*.db-journal
