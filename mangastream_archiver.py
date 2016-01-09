@@ -88,6 +88,7 @@ def download_chapter(chapter):
 
 def main():
     for manga in db.query(Manga).all():
+        print manga.name
         get_chapter(manga)
         for chapter in manga.chapters:
             if not chapter.downloaded:
