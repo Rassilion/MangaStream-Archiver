@@ -34,7 +34,7 @@ def updateMangaList():
     for a in soup.select('table.table.table-striped a[href^=' + base_url + ']'):
         try:
             # if not in database add
-            if db.query(Manga).filter_by(name=unicode(a.string)).first() is None:
+            if db.query(Manga).filter_by(url=unicode(a.attrs.get('href'))).first() is None:
                 manga = Manga(unicode(a.string), unicode(a.attrs.get('href')))
                 db.add(manga)
                 db.session.commit()
@@ -64,6 +64,7 @@ def get_chapter(manga):
 def download_chapter(chapter):
     print chapter.name.encode('utf-8')
     dir = os.path.join(outdir, chapter.manga.name, chapter.name)
+    shutil.rmtree(dir, ignore_errors=True)
     if os.path.isdir(dir):
         print "path not empty. already downloaded?"
         return
