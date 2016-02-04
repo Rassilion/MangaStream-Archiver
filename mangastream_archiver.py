@@ -24,6 +24,7 @@ b = requests.adapters.HTTPAdapter(max_retries=5)
 s.mount('http://', a)
 s.mount('https://', b)
 
+
 # create tables sqlalchemy init
 def create_tables():
     db.create_all()
@@ -61,17 +62,19 @@ def get_chapter(manga):
     manga = db.query(Manga).filter_by(id=manga).first()
     logger.info('Get chapters of {}'.format(manga.name))
     page = s.get(manga.url)
-    soup = bs4.BeautifulSoup(page.text, 'lxml', from_encoding="utf-8")
-    # a tags in table that have table and table-striped classes
-    for a in soup.select('table.table.table-striped a'):
-        try:
-            # if not in database add
-            if db.query(Chapter).filter_by(url=unicode(a.attrs.get('href')[:-1])).first() is None:
-                chapter = Chapter(unicode(a.string), unicode(a.attrs.get('href')[:-1]))
-                page = s.get(chapter.url, allow_redirects=False)
-                manga.chapters.append(chapter)
-        except:
-            traceback.print_exc()
+    if page.status_code == 200:
+        soup = bs4.BeautifulSoup(page.text, 'lxml', from_encoding="utf-8")
+        # a tags in table that have table and table-striped classes
+        for a in soup.select('table.table.table-striped a'):
+            try:
+                # if not in database add
+                if db.query(Chapter).filter_by(url=unicode(a.attrs.get('href')[:-1])).first() is None:
+                    chapter = Chapter(unicode(a.string), unicode(a.attrs.get('href')[:-1]))
+                    manga.chapters.append(chapter)
+            except:  # TODO error handling
+                traceback.print_exc()
+    else:
+        logger.error('manga url error  {}'.format(manga.name))
 
     db.session.commit()
     db.session.remove()
@@ -79,40 +82,60 @@ def get_chapter(manga):
 
 # download given chapter
 def download_chapter(chapter):
+    # get chapter from db
     chapter = db.query(Chapter).filter_by(id=chapter).first()
     logger.info('Download : {}'.format(chapter.name))
+    # prepare dir
     dir = os.path.join(outdir, chapter.manga.name, chapter.name)
     shutil.rmtree(dir, ignore_errors=True)
     if os.path.isdir(dir):
         logger.error('Path not empty: {}'.format(dir))
         return
-    page = requests.get(chapter.url, allow_redirects=False)
-    if not page.ok:
+    # get page
+    page = s.get(chapter.url, allow_redirects=False)
+    if not page.status_code == 200:
         logger.error('Chapter deleted from site: {}'.format(chapter.name))
         return
     ensure_dir(dir)
-    i = 1
+
+    # start download
     error = False
+    url = chapter.url
+    i = 1
     while True:
-        page = s.get(chapter.url + unicode(i), allow_redirects=False)
-        i += 1
-        if page.status_code == 302 or error:
-            # zip chapter
-            shutil.make_archive(dir, 'zip', dir)
-            chapter.downloaded = True
-            shutil.rmtree(dir, ignore_errors=True)
-            logger.info('Download finished {}'.format(chapter.name))
+        page = s.get(url, allow_redirects=False)
+        if page.status_code != 200:
             break
         soup = bs4.BeautifulSoup(page.text, 'lxml')
+        # select next page
+        next_url = soup.select('.next a')
+        if not next_url:
+            logger.critical('page dropdown selector error')
+        url=next_url[0].attrs.get('href')
+        # select image url
         img = soup.select('#manga-page')[0].attrs.get('src')
+        # get image
         r = s.get(img, stream=True)
+        # save image to disk
         if r.status_code == 200:
-            with open(os.path.join(dir, img.split("/")[-1]), 'wb') as f:
+            with open(os.path.join(dir, str(i).zfill(3)+'.'+img.split(".")[-1]), 'wb') as f:
                 r.raw.decode_content = True
                 shutil.copyfileobj(r.raw, f)
         else:
             logger.error('Download error {}'.format(chapter.name))
-            error=True
+            break
+
+        # check chapter end
+        page_number = url.split('/')[-1]
+        if page_number == 'end' or page_number == '1':  # check for '1' because if next chapter avaible next buton links it
+            # zip chapter
+            shutil.make_archive(dir, 'zip', dir)
+            chapter.downloaded = True
+            chapter.page = i
+            shutil.rmtree(dir, ignore_errors=True)
+            logger.info('Download finished {}'.format(chapter.name))
+            break
+        i += 1
 
     db.session.commit()
     db.session.remove()
@@ -159,7 +182,7 @@ def main():
         queue.put(manga.id)
     queue.join()
     queue = Queue()
-    for x in range(3):
+    for x in range(2):
         worker = DownloadWorker(queue)
         # Setting daemon to True will let the main thread exit even though the workers are blocking
         worker.daemon = True

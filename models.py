@@ -10,7 +10,7 @@ def slugify(value, separator="-"):
     """
     import unicodedata
     value = unicodedata.normalize('NFKD', value).encode('ascii', 'ignore')
-    value = unicode(re.sub('[^\w\s-]', '', value).strip())
+    value = unicode(re.sub('[^\w\s-]', ' ', value).strip())
     return unicode(re.sub('[\s]+', separator, value))
 
 
@@ -36,6 +36,7 @@ class Chapter(db.Model):
     name = db.Column(db.Unicode(200), unique=False)
     url = db.Column(db.Unicode(200), unique=True)
     cdn_id = db.Column(db.Integer)
+    page = db.Column(db.Integer)
     downloaded = db.Column(db.Boolean, default=False)
 
     def __init__(self, name, url):
