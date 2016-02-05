@@ -32,6 +32,11 @@ def ensure_dir(f):
 
 
 class MangaStreamArchiver:
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/48.0.2564.103 Safari/537.36",
+        "Accept-Encoding": "gzip"
+
+    }
     s = requests.Session()
     a = requests.adapters.HTTPAdapter(max_retries=5)
     b = requests.adapters.HTTPAdapter(max_retries=5)
@@ -42,7 +47,7 @@ class MangaStreamArchiver:
 
     # get manga list from mangastream if not in database add
     def updateMangaList(self):
-        page = self.s.get(base_url)
+        page = self.s.get(base_url, headers=self.headers)
         soup = bs4.BeautifulSoup(page.text, 'lxml', from_encoding="utf-8")
         # a tags in table that have table and table-striped classes
         for a in soup.select('table.table.table-striped a[href^=' + base_url + ']'):
@@ -57,7 +62,7 @@ class MangaStreamArchiver:
     def get_chapter(self, manga):
         manga = db.query(Manga).filter_by(id=manga).first()
         logger.info('Get chapters of {}'.format(manga.name))
-        page = self.s.get(manga.url)
+        page = self.s.get(manga.url, headers=self.headers)
         if page.status_code == 200:
             soup = bs4.BeautifulSoup(page.text, 'lxml', from_encoding="utf-8")
             # a tags in table that have table and table-striped classes
@@ -89,7 +94,7 @@ class MangaStreamArchiver:
             logger.error('Path not empty: {}'.format(dir))
             return
         # get page
-        page = self.s.get(chapter.url, allow_redirects=False)
+        page = self.s.get(chapter.url, allow_redirects=False, headers=self.headers)
         if not page.status_code == 200:
             logger.error('Chapter deleted from site: {}'.format(chapter.name))
             return
@@ -100,7 +105,7 @@ class MangaStreamArchiver:
         i = 1
         img_urls = []
         while True:
-            page = self.s.get(url, allow_redirects=False)
+            page = self.s.get(url, allow_redirects=False, headers=self.headers)
             if page.status_code != 200:
                 break
             soup = bs4.BeautifulSoup(page.text, 'lxml')
