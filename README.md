@@ -18,11 +18,6 @@ Python 2.7 program for downloading new releases from MangaStream. Its working bu
 
 - name
 - url
-- cdn_id 
+- cdn_id
 - manga -> Manga
 - downloaded
-
- 
-
-
-
