@@ -3,7 +3,8 @@ Python 2.7 program for downloading new releases from MangaStream. Its working bu
 
 - data is in sqllite database
 - creates manga and chapter list in database
-- downloads new chapters from site
+- special characters removed from names (slug)
+- downloads new chapters from site and zip
 
 ## Database model
 
@@ -21,3 +22,4 @@ Python 2.7 program for downloading new releases from MangaStream. Its working bu
 - cdn_id
 - manga -> Manga
 - downloaded
+- page
