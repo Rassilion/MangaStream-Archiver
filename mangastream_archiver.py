@@ -121,7 +121,7 @@ class MangaStreamArchiver:
 
             # check chapter end
             page_number = url.split('/')[-1]
-            if page_number == 'end' or page_number == '1':  # check for '1' because if next chapter avaible next buton links it
+            if page_number == 'tip' or page_number == '1':  # check for '1' because if next chapter avaible next buton links it
 
                 break
             i += 1
