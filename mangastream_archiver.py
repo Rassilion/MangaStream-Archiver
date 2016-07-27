@@ -95,7 +95,10 @@ class MangaStreamArchiver:
             return
         # get page
         page = self.s.get(chapter.url, allow_redirects=False, headers=self.headers)
-        if not page.status_code == 200:
+        soup = bs4.BeautifulSoup(page.text, 'lxml')
+        # select expired chapter h1
+        expired = soup.select('body > div.container.main-body > div.row.content > div.col-sm-8 > h1')
+        if expired:
             logger.error('Chapter deleted from site: {}'.format(chapter.name))
             return
         ensure_dir(dir)
