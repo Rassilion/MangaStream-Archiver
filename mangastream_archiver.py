@@ -93,6 +93,12 @@ class MangaStreamArchiver:
         if os.path.isdir(dir):
             logger.error('Path not empty: {}'.format(dir))
             return
+        # check if chapter already downloaded
+        if not overwriteChapters and os.path.isfile(dir + ".zip"):
+            chapter.downloaded = True
+            db.session.commit()
+            logger.info('chapter already downloaded: {}'.format(dir + ".zip"))
+            return
         # get page
         page = self.s.get(chapter.url, allow_redirects=False, headers=self.headers)
         soup = bs4.BeautifulSoup(page.text, 'lxml')
